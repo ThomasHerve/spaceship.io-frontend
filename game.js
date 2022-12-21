@@ -7,9 +7,8 @@ let otherPlayers = {};
 width = 1000
 height = 1000
 
-// Spaceship position
-x = 100
-y = 100
+// Player scale
+scale = 0.07
 
 function loadGame(){
     let type = "WebGL"
@@ -55,7 +54,23 @@ loadGame();
 
 }*/
 
+addEventListener("mousemove", (event)=>{
+  // Angle spaceship
+  vector_x = event.clientX - player.x
+  vector_y = event.clientY - player.y
+  if(event.clientX == player.x && vector_y < 0) {
+    angle = 0;
+  } else if(event.clientX == player.x) {
+    angle = -Math.PI;
+  }
+  else if(event.clientX > player.x) {
+    angle = Math.atan(vector_y / vector_x) + Math.PI / 2;
+  } else {
+    angle = Math.atan(vector_y / vector_x) - Math.PI / 2;
+  }
 
+  player.rotation = angle
+});
 
 
 /**
@@ -68,7 +83,7 @@ window.addEventListener('resize', (event)=>{
 
 function resize() {
   // Values
-  spaceshipSize = window.innerHeight / 10;
+  spaceshipSize = window.innerHeight * scale;
 
   // Player
   player.height = spaceshipSize;
@@ -88,6 +103,47 @@ function resize() {
 function aboslutePositionToScreen(x, y) {
 
 }
+
+
+/**
+ * Network logic
+ */
+
+// Main network loop
+let socket = new WebSocket("ws://localhost:8080");
+
+socket.onopen = function(e) {
+  console.log("[open] Connection established");
+  console.log("Sending to server");
+
+  // Connect
+  socket.send(JSON.stringify({
+    "type": "connect",
+    "name": "Thomas",
+    "id": 1
+  }))  
+};
+
+socket.onmessage = function(event) {
+  console.log(`[message] Data received from server: ${event.data}`);
+};
+
+socket.onclose = function(event) {
+  if (event.wasClean) {
+    console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
+  } else {
+    // e.g. server process killed or network down
+    // event.code is usually 1006 in this case
+    console.log(`[close] Connection died`);
+    console.log(event)
+  }
+};
+
+socket.onerror = function(error) {
+  console.log(`[error]`);
+  console.log(error)
+};
+
 
 /* UTILS
     ajouter un sprite : app.stage.addChild(anySprite);
